@@ -1,22 +1,20 @@
-import gulp from 'gulp';
-import gulpSass from 'gulp-sass';
-import sass from 'sass';
-import sourcemaps from 'gulp-sourcemaps';
-import uglify from 'gulp-uglify';
-import obfuscate from 'gulp-obfuscate';
-import imagemin, { mozjpeg, optipng, svgo } from 'gulp-imagemin';
+const gulp = require('gulp');
+const sass = require('gulp-sass')(require('sass'));
+const sourcemaps = require('gulp-sourcemaps');
+const uglify = require('gulp-uglify');
+const obfuscate = require('gulp-obfuscate');
+const imagemin = require('gulp-imagemin');
 
-// Configure o gulp-sass para usar o compilador sass
-const sassCompiler = gulpSass(sass);
-
+// Função para compilar o SASS
 function compilaSass() {
     return gulp.src('./source/styles/main.scss')
         .pipe(sourcemaps.init())
-        .pipe(sassCompiler({ outputStyle: 'compressed' }))
+        .pipe(sass({ outputStyle: 'compressed' }))
         .pipe(sourcemaps.write('./maps'))
         .pipe(gulp.dest('./dist/css'));
 }
 
+// Função para comprimir JavaScript
 function comprimejavascript() {
     return gulp.src('./source/scripts/*.js')
         .pipe(uglify())
@@ -24,12 +22,13 @@ function comprimejavascript() {
         .pipe(gulp.dest('./dist/scripts'));
 }
 
+// Função para otimizar imagens
 function compressImages() {
-    return gulp.src('./source/images/*')
+    return gulp.src('./source/images/*.{jpg,jpeg,png,svg}')
         .pipe(imagemin([
-            mozjpeg({ quality: 75, progressive: true }),
-            optipng({ optimizationLevel: 5 }),
-            svgo({
+            imagemin.mozjpeg({ quality: 75, progressive: true }),
+            imagemin.optipng({ optimizationLevel: 5 }),
+            imagemin.svgo({
                 plugins: [
                     { removeViewBox: true },
                     { cleanupIDs: false }
@@ -39,13 +38,15 @@ function compressImages() {
         .pipe(gulp.dest('./dist/images'));
 }
 
+// Função para observar mudanças nos arquivos
 function watchFiles() {
     gulp.watch('./source/styles/**/*.scss', compilaSass);
     gulp.watch('./source/scripts/*.js', comprimejavascript);
-    gulp.watch('./source/images/*', compressImages);
+    gulp.watch('./source/images/*.{jpg,jpeg,png,svg}', compressImages);
 }
 
-export default gulp.series(
+// Exportar as tarefas padrão do Gulp
+exports.default = gulp.series(
     gulp.parallel(compilaSass, comprimejavascript, compressImages),
     watchFiles
 );
